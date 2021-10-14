@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Built-By: Tin
+Build-Jdk: 11.0.2
+Implementation-Title: UserManagement
+Implementation-Version: 1.0
+Implementation-Vendor-Id: com.usermanagement
+Implementation-Vendor: Pivotal Software, Inc.
+Implementation-URL: https://projects.spring.io/spring-boot/UserManagemen
+ t/
+Created-By: Maven Integration for Eclipse
+
