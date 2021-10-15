@@ -13,6 +13,7 @@ import com.usermanagement.entity.UserEntity;
 import com.usermanagement.repository.GroupRepository;
 import com.usermanagement.repository.UserRepository;
 import com.usermanagement.service.IGroupService;
+import com.usermanagement.service.IUserService;
 
 @Service
 public class GroupService implements IGroupService {
@@ -21,6 +22,9 @@ public class GroupService implements IGroupService {
 	
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private IUserService userService;
 	
 	//Create new Group
 	@Override
@@ -44,6 +48,9 @@ public class GroupService implements IGroupService {
 		if(group == null) {
 			return;
 		}else {
+			for(UserEntity user : group.getListUser()) {
+				userService.deleteUser(user.getUsername(), groupid);
+			}
 			groupRepository.delete(group);
 		}
 	}

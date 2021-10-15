@@ -75,12 +75,6 @@ public class UserService implements IUserService{
 			user.setFirstname(model.getLastname());
 			user.setOrigin(model.getOrigin());
 			user.setPhone(model.getPhone());
-//			List<GroupEntity> ListGroup = new ArrayList<>();
-//			for(String item: model.getGroup()) {
-//				GroupEntity group = groupRepository.findByGroupName(item);
-//				ListGroup.add(group);
-//			}
-//			user.setListGroup(ListGroup);
 			userRepository.save(user);
 		}
 	}
