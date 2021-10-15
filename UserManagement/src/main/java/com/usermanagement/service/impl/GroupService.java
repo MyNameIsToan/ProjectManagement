@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.usermanagement.dto.GroupDTO;
+import com.usermanagement.dto.UserDTO;
 import com.usermanagement.entity.GroupEntity;
 import com.usermanagement.entity.UserEntity;
 import com.usermanagement.repository.GroupRepository;
@@ -51,14 +52,34 @@ public class GroupService implements IGroupService {
 	@Override
 	public void updateGroup(Long groupid, GroupDTO model) {
 		GroupEntity groupentity = groupRepository.findOne(groupid);
-		groupentity.setGroupName(model.getGroupName());
-		groupentity.setDescription(model.getDescription());
-		List<UserEntity> ListUser = new ArrayList<>();
-		for(String item : model.getUser()) {
-			UserEntity user = userRepository.findByUsername(item);
-			ListUser.add(user);
+		if(groupentity != null)
+		{
+			groupentity.setGroupName(model.getGroupName());
+			groupentity.setDescription(model.getDescription());
+			List<UserEntity> ListUser = new ArrayList<>();
+			for(String item : model.getUser()) {
+				UserEntity user = userRepository.findByUsername(item);
+				ListUser.add(user);
+			}
+			groupentity.setListUser(ListUser);
+			groupRepository.save(groupentity);
 		}
-		groupentity.setListUser(ListUser);
-		groupRepository.save(groupentity);
+	}
+
+	@Override
+	public List<UserDTO> GetAllUserOfGroup(String GroupName) {
+		GroupEntity group = groupRepository.findByGroupName(GroupName);
+		if(group == null)
+		{
+			List<UserDTO> user = new ArrayList<>();
+			for(UserEntity item : group.getListUser())
+			{
+				UserDTO SubUser = new UserDTO();
+				SubUser.setUsername(item.getUsername());
+				user.add(SubUser);
+			}
+			return user;
+		}else
+			return null;
 	}
 }

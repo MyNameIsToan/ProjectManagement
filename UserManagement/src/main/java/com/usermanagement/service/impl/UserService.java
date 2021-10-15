@@ -1,16 +1,21 @@
 package com.usermanagement.service.impl;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.usermanagement.config.UserPrincipal;
 import com.usermanagement.dto.GroupDTO;
 import com.usermanagement.dto.UserDTO;
 import com.usermanagement.entity.GroupEntity;
+import com.usermanagement.entity.RoleEntity;
 import com.usermanagement.entity.UserEntity;
 import com.usermanagement.repository.GroupRepository;
+import com.usermanagement.repository.RoleRepository;
 import com.usermanagement.repository.UserRepository;
 import com.usermanagement.service.IUserService;
 
@@ -20,12 +25,15 @@ public class UserService implements IUserService{
 	private UserRepository userRepository;
 	@Autowired
 	private GroupRepository groupRepository;
+	@Autowired
+	private RoleRepository roleRepository;
 	
 	//Register
 	@Override
-	public void createUser(UserDTO model) {
-		UserEntity userentity = userRepository.findByUsername(model.getUsername());
-		if(userentity == null) {
+	public int createUser(UserDTO model) {
+		UserEntity userentity1 = userRepository.findByUsername(model.getUsername());
+		UserEntity userentity2 = userRepository.findByEmail(model.getEmail());
+		if(userentity1 == null && userentity2 == null) {
 			UserEntity user = new UserEntity();
 			user.setUsername(model.getUsername());
 			user.setPassword(model.getPassword());
@@ -33,13 +41,14 @@ public class UserService implements IUserService{
 			user.setBirthdate(model.getBirthdate());
 			user.setLastname(model.getLastname());
 			user.setFirstname(model.getLastname());
-			List<GroupEntity> ListGroup = new ArrayList<>();
-			for(String item: model.getGroup()) {
-				GroupEntity group = groupRepository.findByGroupName(item);
-				ListGroup.add(group);
-			}
-			user.setListGroup(ListGroup);
+			RoleEntity role = roleRepository.findOne(1L);
+			Set<RoleEntity> SetRole = new HashSet<RoleEntity>();
+			SetRole.add(role);
+			user.setRoles(SetRole);
 			userRepository.save(user);
+			return 1;
+		}else {
+			return 0;
 		}
 	}
 	
@@ -61,17 +70,17 @@ public class UserService implements IUserService{
 		if(user == null) {
 			return;
 		}else {
-			user.setUsername(model.getUsername());
-			user.setEmail(model.getEmail());
 			user.setBirthdate(model.getBirthdate());
 			user.setLastname(model.getLastname());
 			user.setFirstname(model.getLastname());
-			List<GroupEntity> ListGroup = new ArrayList<>();
-			for(String item: model.getGroup()) {
-				GroupEntity group = groupRepository.findByGroupName(item);
-				ListGroup.add(group);
-			}
-			user.setListGroup(ListGroup);
+			user.setOrigin(model.getOrigin());
+			user.setPhone(model.getPhone());
+//			List<GroupEntity> ListGroup = new ArrayList<>();
+//			for(String item: model.getGroup()) {
+//				GroupEntity group = groupRepository.findByGroupName(item);
+//				ListGroup.add(group);
+//			}
+//			user.setListGroup(ListGroup);
 			userRepository.save(user);
 		}
 	}
@@ -80,39 +89,78 @@ public class UserService implements IUserService{
 	public void addUser(String username, Long groupid) {
 		UserEntity user = userRepository.findByUsername(username);
 		GroupEntity group = groupRepository.findOne(groupid);
-		List<GroupEntity> ListGroup = user.getListGroup();
-		ListGroup.add(group);
-		user.setListGroup(ListGroup);
-		userRepository.save(user);
+		if(user != null && group != null) {
+			List<GroupEntity> ListGroup = user.getListGroup();
+			ListGroup.add(group);
+			user.setListGroup(ListGroup);
+			userRepository.save(user);
+		}	
 	}
 
 	@Override
 	public void deleteUser(String username, Long groupid) {
 		UserEntity user = userRepository.findByUsername(username);
 		GroupEntity group = groupRepository.findOne(groupid);
-		List<GroupEntity> ListGroup = user.getListGroup();
-		int index = 0;
-		for(GroupEntity SubGroup : ListGroup) {
-			if(SubGroup.getId() == groupid) {
-				index = ListGroup.indexOf(SubGroup);
+		if(user != null && group != null) {
+			List<GroupEntity> ListGroup = user.getListGroup();
+			int index = 0;
+			for(GroupEntity SubGroup : ListGroup) {
+				if(SubGroup.getId() == groupid) {
+					index = ListGroup.indexOf(SubGroup);
+				}
 			}
-		}
-		ListGroup.remove(index);
-		user.setListGroup(ListGroup);
-		userRepository.save(user);
+			ListGroup.remove(index);
+			user.setListGroup(ListGroup);
+			userRepository.save(user);
+		}		
 	}
 
 	@Override
 	public List<GroupDTO> GetAllGroupOfUser(String username) {
 		UserEntity user = userRepository.findByUsername(username);
-		List<GroupDTO> group = new ArrayList<>();
-		for(GroupEntity item : user.getListGroup())
-		{
-			GroupDTO SubGroup = new GroupDTO();
-			SubGroup.setGroupName(item.getGroupName());
-			SubGroup.setDescription(item.getGroupName());
-			group.add(SubGroup);
+		if(user != null) {
+			List<GroupDTO> group = new ArrayList<>();
+			for(GroupEntity item : user.getListGroup())
+			{
+				GroupDTO SubGroup = new GroupDTO();
+				SubGroup.setGroupName(item.getGroupName());
+				SubGroup.setDescription(item.getGroupName());
+				group.add(SubGroup);
+			}
+			return group;
+		}else
+			return null;
+		
+	}
+
+	@Override
+    public UserPrincipal findByUsername(String username) {
+        UserEntity user = userRepository.findByUsername(username);
+        UserPrincipal userPrincipal = new UserPrincipal();
+        if (null != user) {
+            Set<String> authorities = new HashSet<>();
+            if (null != user.getRoles()) user.getRoles().forEach(r -> {
+                authorities.add(r.getRoleKey());
+                r.getPermissions().forEach(p -> authorities.add(p.getPermissionKey()));
+            });
+
+            userPrincipal.setUserId(user.getId());
+            userPrincipal.setUsername(user.getUsername());
+            userPrincipal.setPassword(user.getPassword());
+            userPrincipal.setEnabled(user.isEnabled());
+            userPrincipal.setAuthorities(authorities);
+        }
+        return userPrincipal;
+    }
+
+	@Override
+	public void Verified(String Username) {
+		UserEntity user = userRepository.findByUsername(Username);
+		if(user == null) {
+			return;
+		}else {
+			user.setEnabled(true);
+			userRepository.save(user);
 		}
-		return group;
-	}	
+	}
 }

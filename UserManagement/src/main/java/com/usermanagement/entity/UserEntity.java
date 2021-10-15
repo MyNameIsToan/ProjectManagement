@@ -29,6 +29,7 @@ public class UserEntity extends BaseEntity {
 	private String phone;
 	private String email;
 	private Date birthdate;
+	private boolean enabled = false;
 	@ManyToMany(cascade = CascadeType.ALL)
 	@JoinTable(name = "group_user", 
 				joinColumns = {@JoinColumn(name = "user_id")}, 
